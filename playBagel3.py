@@ -38,6 +38,12 @@ def your_turn(comp_word):
     return False
 
 def letter_combos(word, length, start):
+    """
+    returns all of the possible combinations of 'length' letters
+    that are present in the word 'word', starting at the position
+    'start'. There is also probably a better way of going about
+    doing this.
+    """
     combos=[]
     letters = list(word)
     if length==1:
@@ -52,7 +58,13 @@ def letter_combos(word, length, start):
     return tuple(combos)
 
 def comp_turn(words_left):
-    global not_ins
+    """
+    Full computer's turn.
+    """
+
+    global not_ins #contains all of the combinations of letters that cannot be in the word
+
+    # guesses a word randomly
     guess = words_left.pop(random.randint(0,len(words_left)-1))
     good = False
     while not good:
@@ -69,14 +81,30 @@ def comp_turn(words_left):
         if answer.lower()=='yes':
             print 'I win!!'
             return True
+
+    # Gets all of the letter combinations that cannot be in the word.
+    # eg. If the word is HOUSE, and you respond 2, not_in will contain
+    # [(H,O,U),(H,O,S),(H,O,E),(H,U,S),(H,U,E),(H,S,E),(O,U,S)...]
+    # as no word can contain all of the letters in any of those tuples
     not_in= letter_combos(guess, int(num)+1, 0)
+
+    # Stores the current response so it can tell you later if you were wrong.
     not_ins[tuple(not_in)] = (guess, num)
     new_wordlist = []
+
+    # Cycle through all of the words left in the dictionary
     for word in words_left:
         is_okay = True
+        # Look through all of the bad combinations
         for combo in not_in:
             all_letters = True
             word_check = word
+            # Again, there's got to be a better way to do this.
+            # It makes a copy of the word, then goes through that word
+            # letter by letter, removing letters if they're in 
+            # the bad combination in question. If it finds that not
+            # all of the letters in the bad combo are in the word, then
+            # it's fine. 
             for letter in combo:
                 if letter not in word_check:
                     all_letters = False
@@ -87,6 +115,11 @@ def comp_turn(words_left):
                 break
         if is_okay:
             new_wordlist.append(word)
+    # or_in contains tuples of letter combinations that /must/ be in the
+    # word. If the word is HOUSE, and you respond 2, or_in will contain
+    # [(H,O), (H,U), (H,S), (H,E), (O,U), (O,S), (O,E) ...]
+    # as any viable word must contain all of the letters in at least
+    # one of those words.
     or_in = letter_combos(guess, int(num), 0)
     new_wordlist_2 = []
     for word in new_wordlist:
@@ -111,6 +144,9 @@ def comp_turn(words_left):
     return new_wordlist_2
 
 def find_error(word):
+    """
+    Looks through your responses to find if you made an error
+    """
     global not_ins
     for rule in not_ins.keys():
         for combo in rule:
@@ -162,4 +198,3 @@ def play():
 
 if __name__ == "__main__":
     play()
-#test
