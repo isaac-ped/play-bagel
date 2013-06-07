@@ -6,6 +6,9 @@ global not_ins
 not_ins = dict()
 
 def setup_dict(dict_file):
+    """
+    loads all five letter words from a dictionary
+    """
     global good_words
     all_words = [x.strip().lower() for x in open(dict_file).readlines()]
     good_words = []
@@ -14,6 +17,9 @@ def setup_dict(dict_file):
             good_words.append(word)
 
 def your_turn(comp_word):
+    """
+    Calculates how many letters from your guess are in the comuter's word
+    """
     global good_words
     my_word = raw_input("Guess a word: ").lower()
     while not my_word in good_words and not my_word=='cheat!':
@@ -23,6 +29,7 @@ def your_turn(comp_word):
         return True
     not_counted_letters = comp_word
     numLetters = 0
+   # Kinda embarassed about how I'm doing this. There's gotta be a better way.
     for letter in my_word:
         if letter in not_counted_letters:
             not_counted_letters = not_counted_letters.replace(letter,'',1)
