@@ -8,7 +8,7 @@ __author__ = 'iped'
 class BagelAI:
 
     FULL_DICTIONARY_FILE = 'full_dictionary.txt'
-    SHORT_DICTIONARY_FILE = 'short_dictionary.txt'
+    SHORT_DICTIONARY_FILE = 'common_dictionary.txt'
 
     def __init__(self, difficulty):
         """
