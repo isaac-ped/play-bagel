@@ -1,6 +1,8 @@
 
 from pprint import pprint
 import random
+import re
+import sys
 
 __author__ = 'iped'
 
@@ -293,12 +295,27 @@ class BagelGame:
         self.ai.apply_guess(guess, num)
         return False
 
-def test_remaining_words():
-    ai = BagelAI(2)
-    print(ai._narrow_wordpool(['abcde', 'bcdef'], 'efghi', 0))
+class  BagelSolver:
+    
+    def __init__(self):
+        self.ai = BagelAI(2)
+
+    def prompt(self):
+        word_and_num = ''
+        while not re.match('[a-z]{5} [0-5]', word_and_num):
+            word_and_num = raw_input('Enter <word> <#>: ')
+
+        return word_and_num[0:5], int(word_and_num[6])
+                
+    def solve(self):
+        while True:
+            word, num = self.prompt()
+            self.ai.apply_guess(word, num)
+            pprint(self.ai._possible_words)
 
 
 if __name__ == '__main__':
-    test_remaining_words()
-    game = BagelGame(2)
-    game.play()
+    if 'solve' in sys.argv:
+        BagelSolver().solve()
+    else:
+        BagelGame(2).play()
