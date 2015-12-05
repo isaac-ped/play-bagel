@@ -7,6 +7,7 @@ import sys
 __author__ = 'iped'
 
 
+
 class BagelAI:
 
     FULL_DICTIONARY_FILE = 'full_dictionary.txt'
@@ -208,6 +209,13 @@ class BagelGame:
         self._guesses = {}
         self._n_turns = 0
 
+    @staticmethod
+    def _prompt(text):
+        try:
+            return raw_input(text)
+        except:
+            return input(text)
+
     def play(self):
         self._n_turns = 0
         self._guesses = {}
@@ -226,7 +234,7 @@ class BagelGame:
                 print('Your word is not in my dictionary, or you messed up...')
                 your_word = ''
                 while not len(your_word) == 5:
-                    your_word = input('What was your word? ')
+                    your_word = self._prompt('What was your word? ')
                 if not self.ai.in_full_dict(your_word):
                     print('Sorry, but %s is not in my dictionary' % your_word)
                 else:
@@ -239,7 +247,7 @@ class BagelGame:
         if not win:
             keep_playing = ''
             while not (keep_playing == 'yes' or keep_playing == 'no'):
-                keep_playing = input('Would you like to keep guessing?')
+                keep_playing = self._prompt('Would you like to keep guessing?')
             if keep_playing == 'yes':
                 while not win:
                     win = self._human_turn()
@@ -247,7 +255,7 @@ class BagelGame:
                 print('My word was %s'%self.ai.secret_word)
 
     def _human_turn(self):
-        guessed_word = input('Guess a word: ').lower()
+        guessed_word = self._prompt('Guess a word: ').lower()
         while not self.ai.in_full_dict(guessed_word) \
                 and not guessed_word == self.CHEAT_WORD:
             if guessed_word == self.LIST_WORD:
@@ -255,7 +263,7 @@ class BagelGame:
             if guessed_word == self.SHOW_WORD:
                 pprint(self.ai._possible_words)
 
-            guessed_word = input('Sorry... I don\'t know that word. Guess again: ')
+            guessed_word = self._prompt('Sorry... I don\'t know that word. Guess again: ')
 
         if self.ai.is_secret_word(guessed_word) \
                 or guessed_word == self.CHEAT_WORD:
@@ -276,7 +284,7 @@ class BagelGame:
         got_response = False
         num = 0
         while not got_response:
-            response = input('How many letters from %s are in your word? '%
+            response = self._prompt('How many letters from %s are in your word? '%
                              guess)
             try:
                 num = int(response)
@@ -287,7 +295,7 @@ class BagelGame:
         if num == 5:
             answer = ''
             while (not answer.lower() == 'yes' ) and (not answer.lower() == 'no'):
-                answer = input('Is %s your word?! '%guess)
+                answer = self._prompt('Is %s your word?! '%guess)
             if answer.lower() == 'yes':
                 print('I WINNN!')
                 return True
@@ -303,7 +311,7 @@ class  BagelSolver:
     def prompt(self):
         word_and_num = ''
         while not re.match('[a-z]{5} [0-5]', word_and_num):
-            word_and_num = raw_input('Enter <word> <#>: ')
+            word_and_num = BagelGame._prompt('Enter <word> <#>: ')
 
         return word_and_num[0:5], int(word_and_num[6])
                 
