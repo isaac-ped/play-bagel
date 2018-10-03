@@ -1,0 +1,48 @@
+<html>
+    <body>
+        <p> Bagel Checker <br/>
+    <input type="text" id="word1"> </input>
+    <input type="text" id="word2"> </input>
+    <button onclick="compare()"> Go! </button>
+    <p id="common"> </p>
+
+    <textarea rows="40" cols="50">
+Enter notes here...
+    </textarea>
+    <script type="text/javascript">
+
+var check_words = function(word1, word2) {
+    var n = 0;
+    var letters = [];
+    for (var i=0; i < word1.length; i++) {
+        var j;
+        for (j=0; j < word2.length; j++) {
+            if (word1[i] == word2[j]) {
+                break;
+            }
+        }
+        if (word1[i] == word2[j]) {
+            n += 1;
+            letters.push(word1[i]);
+            word2 = word2.substr(0, j) + word2.substr(j+1, word2.length);
+        }
+    }
+    return letters;
+}
+
+var compare = function() {
+    var w1 = document.getElementById("word1").value;
+    var w2 = document.getElementById("word2").value;
+
+    var out = document.getElementById("common");
+
+
+    var common = check_words(w1, w2);
+
+    out.innerHTML = common.length + ": " + common
+}
+
+    </script>
+    </body>
+</html>
+
