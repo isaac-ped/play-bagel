@@ -9,10 +9,28 @@
     <button onclick="compare()"> Go! </button>
     <font size="3"  id="common"> </font><br>
 
-    <textarea rows="30" cols="45">
+    <textarea id="notes" rows="30" cols="45" onchange="save_text()">
 Enter notes here...
     </textarea>
     <script type="text/javascript">
+
+window.onload = function() {
+    var notes = localStorage.getItem('notes_');
+    if (notes != null) {
+        document.getElementById("notes").value = notes;
+    }
+    var yours = localStorage.getItem("yours_");
+    if (yours != null) {
+        document.getElementById("word1").value = yours;
+    }
+}
+
+var save_text = function() {
+    var notes = document.getElementById('notes').value;
+    localStorage.setItem("notes_", notes);
+    var yours = document.getElementById('word1').value;
+    localStorage.setItem("yours_", yours);
+}
 
 var check_words = function(word1, word2) {
     var n = 0;
@@ -43,6 +61,8 @@ var compare = function() {
     var common = check_words(w1.toUpperCase(), w2.toUpperCase());
 
     out.innerHTML = common.length + ": " + common
+
+
 }
 
     </script>
