@@ -40,7 +40,7 @@ var compare = function() {
     var out = document.getElementById("common");
 
 
-    var common = check_words(w1, w2);
+    var common = check_words(w1.toUpperCase(), w2.toUpperCase());
 
     out.innerHTML = common.length + ": " + common
 }
