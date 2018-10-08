@@ -28,8 +28,6 @@ window.onload = function() {
 var save_text = function() {
     var notes = document.getElementById('notes').value;
     localStorage.setItem("notes_", notes);
-    var yours = document.getElementById('word1').value;
-    localStorage.setItem("yours_", yours);
 }
 
 var check_words = function(word1, word2) {
@@ -53,6 +51,7 @@ var check_words = function(word1, word2) {
 
 var compare = function() {
     var w1 = document.getElementById("word1").value;
+    localStorage.setItem("yours_", w1);
     var w2 = document.getElementById("word2").value;
 
     var out = document.getElementById("common");
