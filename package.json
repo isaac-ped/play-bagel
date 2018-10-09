@@ -1,0 +1,19 @@
+{
+  "name": "bagel",
+  "version": "1.0.0",
+  "description": "play bagel",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "words"
+  ],
+  "author": "ipeds",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.16.3",
+    "socket.io": "^2.1.1",
+    "socket.io-client": "^2.1.1"
+  }
+}
