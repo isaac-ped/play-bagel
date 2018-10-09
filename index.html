@@ -1,0 +1,257 @@
+<html>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="http://d3js.org/d3.v4.min.js" charset="utf-8"></script>
+    
+<body>
+    <font size="5"> Bagel! </font> <font size="1" id="status"> </font> <br/>
+    <font size="3"> Game name: </font> <input type="text" id="gname" size="5"></input><br/>
+    <font size="3"> Your name: </font> <input type="text" id="pname" size="10"></input><br/>
+    <font size="3"> Your word: </font> <input type="text" id="yours" size="5" maxlength="5"></input><br/>
+    <button onclick="join()" id='join'> Join </button>
+    <br/>
+
+    <font size="3"> Guess: </font> <input type="text" id="guess" size="5" maxlength="5"></input><br/>
+    <button id='g_button' onclick="guess()"> Guess </button><br/>
+
+    <table id="guesses" style="width: 75%"> 
+        <thead> <tr> </tr></thead>
+        <tbody> </tbody>
+    </table>
+    <br/><br/>
+    <textarea id="notes" rows="30" cols="45" onkeyup="save_text()">
+Enter notes here...
+    </textarea>
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="text/javascript">
+
+window.onload = function() {
+    var notes = localStorage.getItem('notes_');
+    if (notes != null) {
+        document.getElementById("notes").value = notes;
+    }
+}
+
+var update_guesses = function(game) {
+    var guesses = game.guesses;
+    var players = game.players;
+    var table = d3.select("#guesses");
+    var thead = table.select('thead');
+    var tbody = table.select('tbody');
+
+    thead.select('tr')
+        .selectAll('th')
+        .data(players).enter()
+        .append('th')
+            .text(function(k) { return k;});
+
+    var p1_data = guesses.filter(function(d) {
+        return d.player == players[0];
+    });
+    var p2_data = guesses.filter(function(d) {
+        return d.player == players[1];
+    });
+
+    while (p1_data.length > p2_data.length) {
+        p2_data.push(null);
+    }
+    while (p2_data.length > p1_data.length) {
+        p1_data.push(null);
+    }
+    console.log(p1_data);
+    console.log(p2_data);
+
+    var converted = d3.zip(p1_data, p2_data);
+    console.log(converted);
+
+    var rows = tbody.selectAll('tr')
+        .data(converted)
+    
+    console.log("HERE!");
+    
+    var row = rows.enter().append('tr')
+              .merge(rows)
+                  .selectAll('td')
+                  .data(function(d) { return d;});
+
+    row.enter()
+       .append('td')
+       .merge(row)
+       .text(function(d) { 
+            if (d == null) {
+                return '';
+            } else {
+                return d.guess + ": " + d.resp;
+            }
+        });
+
+    rows.exit()
+        .remove();
+}
+
+var save_text = function() {
+    var notes = document.getElementById('notes').value;
+    localStorage.setItem("notes_", notes);
+}
+
+var check_words = function(word1, word2) {
+    var n = 0;
+    var letters = [];
+    for (var i=0; i < word1.length; i++) {
+        var j;
+        for (j=0; j < word2.length; j++) {
+            if (word1[i] == word2[j]) {
+                break;
+            }
+        }
+        if (word1[i] == word2[j]) {
+            n += 1;
+            letters.push(word1[i]);
+            word2 = word2.substr(0, j) + word2.substr(j+1, word2.length);
+        }
+    }
+    return letters;
+}
+
+var socket = io();
+
+var set_status = function(msg) {
+    document.getElementById('status').innerHTML = msg;
+}
+
+var guess = function() {
+    var guess_ = document.getElementById('guess').value;
+    if (guess_.length != 5) {
+        set_status("Guess 5 letter word");
+        return;
+    }
+    socket.emit('guess', {
+        game : gname, 
+        player: pname,
+        guess : guess_
+    });
+};
+
+var gname;
+var yours;
+var pname;
+
+var join = function() {
+    console.log('joining');
+    gname = document.getElementById("gname").value;
+    pname = document.getElementById("pname").value;
+    yours = document.getElementById('yours').value;
+
+    if (gname.length == '') {
+        set_status('enter game name');
+        return;
+    }
+    if (pname.length == '') {
+        set_status('enter player name');
+        return;
+    }
+
+    if (yours.length != 5) {
+        set_status('enter 5 letter word');
+        return;
+    }
+
+    socket.emit('join', {game: gname, player: pname});
+};
+
+var set_guess_enabled = function(val) {
+    document.getElementById('guess').disabled = !val;
+    document.getElementById('g_button').disabled = !val;
+}
+
+socket.on('status', function(msg) {
+    set_status(msg.message);
+});
+
+socket.on('joined', function(game) {
+    set_status('joined');
+    document.getElementById('gname').disabled = true;
+    document.getElementById('pname').disabled = true;
+    document.getElementById('yours').disabled = true;
+    document.getElementById('guess').disabled = true;
+    document.getElementById('join').disabled = true;
+    document.getElementById('g_button').disabled = true;
+
+});
+
+socket.on('started', function(game) {
+    set_status('started');
+    update_guesses(game);
+});
+
+socket.on('guess', function(game) {
+    set_status('guess');
+    document.getElementById('guess').value = '';
+    set_guess_enabled(true);
+    update_guesses(game);
+});
+
+socket.on('wait', function(game) {
+    set_status('wait');
+    set_guess_enabled(false);
+    update_guesses(game);
+});
+
+socket.on('guessed', function(game) {
+    set_status('guessed');
+    console.log(game);
+    var guess = game.active_guess.toUpperCase();
+    var yours = document.getElementById('yours').value.toUpperCase();
+
+    if (guess == yours) {
+        socket.emit('correct', {
+            game : gname,
+            player : pname
+        });
+    } else {
+        var overlap = check_words(guess, yours);
+        socket.emit('response', {
+            game : gname,
+            player : pname,
+            response : overlap.length
+        });
+    }
+
+    update_guesses(game);
+});
+
+socket.on('responded', function(game) {
+    set_status('responded');
+    set_guess_enabled(false);
+    update_guesses(game);
+});
+
+socket.on('win', function(game){ 
+    set_status('You Won!');
+    update_guesses(game);
+});
+
+socket.on('lose', function(game) {
+    set_status('You Lose :(');
+    update_guesses(game);
+});
+
+var compare = function() {
+    var w1 = document.getElementById("word1").value;
+    localStorage.setItem("yours_", w1);
+    var w2 = document.getElementById("word2").value;
+
+    var out = document.getElementById("common");
+
+
+    var common = check_words(w1.toUpperCase(), w2.toUpperCase());
+
+    out.innerHTML = common.length + ": " + common
+
+
+}
+
+    </script>
+    </body>
+</html>
+
