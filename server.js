@@ -7,7 +7,7 @@ var valid_words = fs.readFileSync('full_dictionary.txt', 'utf-8').split('\n')
 console.log(valid_words)
 
 var is_word = function(word) {
-    return valid_words.indexOf(word) > -1;
+    return valid_words.indexOf(word.toLowerCase()) > -1;
 }
 
 server.listen(8080);
