@@ -11,10 +11,10 @@
     <button onclick="join()" id='join'> Join </button>
     <br/>
 
-    <font size="3"> Guess: </font> <input type="text" id="guess" size="5" maxlength="5"></input><br/>
-    <button id='g_button' onclick="guess()"> Guess </button><br/>
+    <font size="3"> Guess: </font> <input type="text" id="guess" size="5" maxlength="5" disabled='true'></input><br/>
+    <button id='g_button' onclick="guess()" disabled="true"> Guess </button><br/>
 
-    <table id="guesses" style="width: 75%"> 
+    <table id="guesses" style="width:75%"> 
         <thead> <tr> </tr></thead>
         <tbody> </tbody>
     </table>
@@ -29,6 +29,18 @@ window.onload = function() {
     var notes = localStorage.getItem('notes_');
     if (notes != null) {
         document.getElementById("notes").value = notes;
+    }
+    var gname = localStorage.getItem('gname_');
+    if (gname != null) {
+        document.getElementById('gname').value = gname;
+    }
+    var pname = localStorage.getItem('pname_');
+    if (pname != null) {
+        document.getElementById('pname').value = pname;
+    }
+    var yours = localStorage.getItem('yours_');
+    if (yours != null) {
+        document.getElementById('yours').value = yours;
     }
 }
 
@@ -113,10 +125,16 @@ var check_words = function(word1, word2) {
     return letters;
 }
 
-var socket = io();
+var joined = false;
 
-var set_status = function(msg) {
+var socket = io();
+var set_status = function(msg, err=false) {
     document.getElementById('status').innerHTML = msg;
+    if (err) {
+        document.getElementById('status').setAttribute('color','red');
+    } else {
+        document.getElementById('status').setAttribute('color','black');
+    }
 }
 
 var guess = function() {
@@ -142,6 +160,10 @@ var join = function() {
     pname = document.getElementById("pname").value;
     yours = document.getElementById('yours').value;
 
+    localStorage.setItem("gname_", gname);
+    localStorage.setItem('pname_', pname);
+    localStorage.setItem('yours_', yours);
+
     if (gname.length == '') {
         set_status('enter game name');
         return;
@@ -152,17 +174,28 @@ var join = function() {
     }
 
     if (yours.length != 5) {
-        set_status('enter 5 letter word');
+        set_status('enter 5 letter word', true);
         return;
     }
 
-    socket.emit('join', {game: gname, player: pname});
+    socket.emit('join', {game: gname, player: pname, word: yours});
 };
+
+socket.on('reconnect_attempt', function() {
+    if (joined) {
+        join();
+    }
+});
+
 
 var set_guess_enabled = function(val) {
     document.getElementById('guess').disabled = !val;
     document.getElementById('g_button').disabled = !val;
 }
+
+socket.on('err', function(msg) {
+    set_status(msg.message, true);
+});
 
 socket.on('status', function(msg) {
     set_status(msg.message);
@@ -170,13 +203,14 @@ socket.on('status', function(msg) {
 
 socket.on('joined', function(game) {
     set_status('joined');
+    joined = true;
+    update_guesses(game);
     document.getElementById('gname').disabled = true;
     document.getElementById('pname').disabled = true;
     document.getElementById('yours').disabled = true;
     document.getElementById('guess').disabled = true;
     document.getElementById('join').disabled = true;
     document.getElementById('g_button').disabled = true;
-
 });
 
 socket.on('started', function(game) {

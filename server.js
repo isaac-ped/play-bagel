@@ -2,6 +2,13 @@ const express = require('express')
 const app = express()
 var server = require('http').Server(app)
 var io = require('socket.io')(server);
+var fs = require('fs')
+var valid_words = fs.readFileSync('full_dictionary.txt', 'utf-8').split('\n')
+console.log(valid_words)
+
+var is_word = function(word) {
+    return valid_words.indexOf(word) > -1;
+}
 
 server.listen(8080);
 
@@ -13,47 +20,39 @@ var send_err = function(socket, msg) {
     socket.emit('err', { message : msg });
 }
 
-function Connection(socket, name, game) {
+function Connection(socket, name, word, game) {
     this.game = game;
     this.name = name;
+    this.word = word;
     this.socket = socket;
+    this.last_emission = null;
 
-    this.joined = function(){
-        console.log(this.name, 'joined');
-        this.socket.emit('joined', this.game.data());
-    };
+    var emissions = [
+        'joined',
+        'started',
+        'guess',
+        'wait',
+        'guessed',
+        'responded',
+        'lose',
+        'win'
+    ];
 
-    this.started = function() {
-        this.socket.emit('started', this.game.data());
-    };
-
-    this.guess = function() {
-        this.socket.emit('guess', this.game.data());
+    for (var i = 0; i < emissions.length; i++) {
+        let emission = '' + emissions[i].slice(0);
+        this[emission] = function() {
+            console.log(this.name, emission);
+            this.socket.emit(emission, this.game.data());
+            this.last_emission = emission;
+        }
+        console.log("registered", emission)
     }
 
-    this.wait = function() {
-        this.socket.emit('wait', this.game.data());
-    }
-
-    this.guessed = function() {
-        this.socket.emit('guessed', this.game.data());
-    }
-
-    this.responded = function() {
-        this.socket.emit('responded', this.game.data());
-    }
-
-    this.win = function() {
-        this.socket.emit('win', this.game.data());
-    }
-
-    this.lose = function() {
-        this.socket.emit('lose', this.game.data());
-    }
 }
 
 function Game(name) {
     this.name = name;
+    var started = false;
     this.players = {};
     this.active_player = null;
     this.waiting_player = null;
@@ -80,6 +79,7 @@ function Game(name) {
     };
 
     this.start = function() {
+        this.started = true;
         names = Object.keys(this.players);
         this.active_player = this.players[names[0]];
         this.waiting_player = this.players[names[1]];
@@ -92,6 +92,9 @@ function Game(name) {
     };
 
     this.is_active = function(name, socket) {
+        if (!this.started) {
+            return false;
+        }
         if (this.active_player.name != name) {
             send_err(socket, "Not your turn!");
             return false;
@@ -101,6 +104,10 @@ function Game(name) {
 
     this.guess = function(name, guess, socket) {
         if (!this.is_active(name, socket)) {
+            return;
+        }
+        if (!is_word(guess)) {
+            send_err(socket, "Please enter REAL word!");
             return;
         }
         this.active_guess = guess;
@@ -137,15 +144,25 @@ function Game(name) {
         this.active_player.lose();
     }
 
-    this.join = function(name, socket) {
+    this.join = function(name, word, socket) {
         if (name in this.players) {
+            if (word != this.players[name].word) {
+                send_err(socket, "Player already in game with different word!");
+                return;
+            }
             console.log('rejoining');
-            var cnx = new Connection(socket, name, this);
-            this.players[name] = cnx;
+            var cnx = this.players[name];
+            var last_emission = cnx.last_emission;
+            cnx.socket = socket;
             cnx.joined();
+            cnx[last_emission]();
         } else if (this.num_players() < 2) {
             console.log('joining');
-            var cnx = new Connection(socket, name, this);
+            if (!is_word(word)) {
+                send_err(socket, "Please enter a REAL word");
+                return;
+            }
+            var cnx = new Connection(socket, name, word, this);
             this.players[name] = cnx;
             cnx.joined();
 
@@ -182,7 +199,7 @@ io.on('connection', function(socket) {
     socket.on('join', function(data) {
         console.log('joined', data);
         var game = get_game(data.game);
-        game.join(data.player, socket);
+        game.join(data.player, data.word, socket);
     });
 
     socket.on('guess', function(data) {
