@@ -19,7 +19,7 @@
         <tbody> </tbody>
     </table>
     <br/><br/>
-    <textarea id="notes" rows="30" cols="45" onkeyup="save_text()">
+    <textarea id="notes" rows="30" cols="51" onkeyup="save_text()">
 Enter notes here...
     </textarea>
     <script src="/socket.io/socket.io.js"></script>
@@ -185,6 +185,7 @@ var join = function() {
         document.getElementById('notes').value = notes;
     } else {
         document.getElementById('notes').value = 'a b c d e f g h i j k l m n o p q r s t u v w x y z';
+    }
 
     socket.emit('join', {game: gname, player: pname, word: yours});
 };
