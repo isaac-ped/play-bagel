@@ -26,10 +26,6 @@ Enter notes here...
     <script type="text/javascript">
 
 window.onload = function() {
-    var notes = localStorage.getItem('notes_');
-    if (notes != null) {
-        document.getElementById("notes").value = notes;
-    }
     var gname = localStorage.getItem('gname_');
     if (gname != null) {
         document.getElementById('gname').value = gname;
@@ -41,6 +37,10 @@ window.onload = function() {
     var yours = localStorage.getItem('yours_');
     if (yours != null) {
         document.getElementById('yours').value = yours;
+    }
+    var notes = localStorage.getItem('notes_' + gname);
+    if (notes != null) {
+        document.getElementById("notes").value = notes;
     }
 }
 
@@ -100,12 +100,6 @@ var update_guesses = function(game) {
     rows.exit()
         .remove();
 }
-
-var save_text = function() {
-    var notes = document.getElementById('notes').value;
-    localStorage.setItem("notes_", notes);
-}
-
 var check_words = function(word1, word2) {
     var n = 0;
     var letters = [];
@@ -154,6 +148,14 @@ var gname;
 var yours;
 var pname;
 
+var save_text = function() {
+    if (joined) {
+        var notes = document.getElementById('notes').value;
+        localStorage.setItem("notes_" + gname, notes);
+    }
+}
+
+
 var join = function() {
     console.log('joining');
     gname = document.getElementById("gname").value;
@@ -177,6 +179,12 @@ var join = function() {
         set_status('enter 5 letter word', true);
         return;
     }
+
+    var notes = localStorage.getItem('notes_' + gname);
+    if (notes != null) {
+        document.getElementById('notes').value = notes;
+    } else {
+        document.getElementById('notes').value = 'a b c d e f g h i j k l m n o p q r s t u v w x y z';
 
     socket.emit('join', {game: gname, player: pname, word: yours});
 };
@@ -263,11 +271,15 @@ socket.on('responded', function(game) {
 socket.on('win', function(game){ 
     set_status('You Won!');
     update_guesses(game);
+    localStorage.removeItem('notes_' + gname);
+    joined = false;
 });
 
 socket.on('lose', function(game) {
     set_status('You Lose :(');
     update_guesses(game);
+    localStorage.removeItem('notes_' + gname);
+    joined = false;
 });
 
 var compare = function() {
