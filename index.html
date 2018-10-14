@@ -2,26 +2,45 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="http://d3js.org/d3.v4.min.js" charset="utf-8"></script>
-    
+<link rel="stylesheet" type="text/css" href="style.css">
 <body>
-    <font size="5"> Bagel! </font> <font size="1" id="status"> </font> <br/>
-    <font size="3"> Game name: </font> <input type="text" id="gname" size="5"></input><br/>
-    <font size="3"> Your name: </font> <input type="text" id="pname" size="10"></input><br/>
-    <font size="3"> Your word: </font> <input type="text" id="yours" size="5" maxlength="5"></input><br/>
-    <button onclick="join()" id='join'> Join </button>
+<div class="page">
+    <div id="title">
+    <font size="5"> ! Bagel ! </font>  <br/>
+    </div>
+    <div id="params">
+        <div class="param first" >
+            <font size="3"> Your name </font> <br/>
+            <input type="text" id="pname" size="5"></input>
+        </div>
+        <div class="param last">
+            <font size="3"> Your word </font> <br/>
+            <input type="text" id="yours" size="5" maxlength="5"></input>
+        </div>
+        <div class="param middle" >
+            <font size="3"> Game name </font> <br/>
+            <input type="text" id="gname" size="10"></input>
+        </div>
+    </div>
+    <div class="join">
+        <button onclick="join()" id='join'> Join </button>
+    </div>
     <br/>
-
-    <font size="3"> Guess: </font> <input type="text" id="guess" size="5" maxlength="5" disabled='true'></input><br/>
-    <button id='g_button' onclick="guess()" disabled="true"> Guess </button><br/>
-
-    <table id="guesses" style="width:75%"> 
+    <div class="guess">
+    <button id='g_button' onclick="guess()" disabled="true"> Guess </button>
+    <input type="text" id="guess" size="5" maxlength="5" disabled='true'></input>
+    <div class="status">
+    <font size="2" id="status"> Status message </font>
+    </div>
+    </div>
+    <table id="guesses" style="width:100%"> 
         <thead> <tr> </tr></thead>
         <tbody> </tbody>
     </table>
-    <br/><br/>
-    <textarea id="notes" rows="30" cols="51" onkeyup="save_text()">
+    <textarea id="notes" rows="30"  onkeyup="save_text()">
 Enter notes here...
     </textarea>
+</div>
     <script src="/socket.io/socket.io.js"></script>
     <script type="text/javascript">
 
@@ -259,8 +278,9 @@ socket.on('guessed', function(game) {
             response : overlap.length
         });
     }
-
     update_guesses(game);
+    document.getElementById('guess').value = '';
+    set_guess_enabled(true);
 });
 
 socket.on('responded', function(game) {
